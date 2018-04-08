@@ -21,9 +21,10 @@ class Net(nn.Module):
         # not adding padding - therefore need to ensure images are divisible by 5 to avoid columns being lost (as pyTorch leaves 
         # it up to user to pad)
         # see: http://pytorch.org/docs/master/nn.html#torch.nn.Conv2d
-        self.conv1 = nn.Conv2d(1, 32, 5)
-        self.conv2 = nn.Conv2d(32, 32, 5)
-        self.conv3 = nn.Conv2d(32, 32, 5)
+        # made the kernel size 4x4 as 224 is divisible by 4
+        self.conv1 = nn.Conv2d(1, 32, 4)
+        self.conv2 = nn.Conv2d(32, 32, 4)
+        self.conv3 = nn.Conv2d(32, 32, 4)
         # kernel size of (2,2) and since left out stride it defaults to the size of the kernel. Note: putting a pooling layer after
         # every convolutional layer just like we did in Keras CV capstone
         self.maxPool1 = nn.MaxPool2d(2)
@@ -84,7 +85,7 @@ class Net(nn.Module):
         x = F.relu(self.linear3(x))
         # now we output batch_sizex136 which is what we want.
         self.linear4 = nn.Linear(list(x.size())[1], 136)
-        x = F.relu(self.linear4(x))
+        x = self.linear4(x)
         print(x.size())
         # x = F.relu(self.linear1(x))
         # x = self.drop2(x)
