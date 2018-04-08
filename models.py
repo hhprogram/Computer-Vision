@@ -48,29 +48,44 @@ class Net(nn.Module):
         ## x = self.pool(F.relu(self.conv1(x)))
         # note: X starts of as the input image. And then just like we do in keras we keep using it as the output of each 
         # subsequent layer
+        # get the number of examples within the input batch given X. (X is iterable of inputs. ie a variable IMAGES that has a bunch of 
+        # images within it to be used in the network)
+        batch_size = x.size()[0]
         x = self.maxPool1(F.relu(self.conv1(x)))
         x = self.maxPool2(F.relu(self.conv2(x)))
         x = self.maxPool3(F.relu(self.conv3(x)))
         x = self.drop1(x)
         # this should be like a Flatten layer. Where putting just the argument '-1' just takes the input layer dimensions and then 
-        # just flattens it accordingly
-        x = x.view(-1)
+        # just flattens it accordingly. (it works like numpy's 'reshape' method. batch_size is the first argument as we want it 
+            # to have 10 'columns' / rows and then flat within each of those. We want that as to keep each individual input image
+            # seperate)
+        x = x.view(batch_size, -1)
         print(x.size())
         # note: this is how we make the 'Dense' (fully connected) layers like we did in Keras. There are called Linear here because remember
         # dense layer is a layer that is a linear operation of all the input vectors. We then will add on in the 'forward' function the 
-        # activation function we want to use on this layer. Remember the last layer with the output of 126 values will have no activation 
+        # activation function we want to use on this layer. Remember the last layer with the output of 136 values per input sample 
+        # (note: per input sample means that we'll be outputting a 2-D output 10x136. Where 10 is just the batch_size - happens to be 10 in this
+        # project, but if you change it in the juptyer notebook2 then it will change. And this 10 represents 10 images in each batch put into
+        # this network. Therefore, the 136 part is the 136 'keypoints' one for x and one for y coordinate of each of the 68 keypoints.) 
+        # will have no activation 
         # function because we aren't classifying but really more doing a regression. While the other ones we are classifying features within 
         # the face to help us determine facial keypoints
-        self.linear1 = nn.Linear(list(x.size())[0], 5000)
+        # note: http://pytorch.org/docs/master/nn.html#linear.....the docs say the in_features is the value of the size of EACH input sample. This
+        # is a key thing to not overlook. This is the size of the input layer when it's feeding forward and it only feeds one image at a time.
+        # therefore this value is the dimension of each individual input sample and in our case x.size())[1] because x.size())[0] = batch size 
+        # and x.size())[1] is the dimension of each individual image within the batch 
+        # then NOTE: that the out_features parameter is also the size of EACH input sample output that we want. I.e what we want each layer to 
+        # output for each individual layer. Therefore, after this first linear layer its output is 10x5000 
+        self.linear1 = nn.Linear(list(x.size())[1], 5000)
         x = F.relu(self.linear1(x))
-        self.linear2 = nn.Linear(list(x.size())[0], 2500)
+        self.linear2 = nn.Linear(list(x.size())[1], 2500)
         x = F.relu(self.linear2(x))
-        self.linear3 = nn.Linear(list(x.size())[0], 500)
+        self.linear3 = nn.Linear(list(x.size())[1], 500)
         x = F.relu(self.linear3(x))
-        self.linear4 = nn.Linear(list(x.size())[0], 136)
+        # now we output batch_sizex136 which is what we want.
+        self.linear4 = nn.Linear(list(x.size())[1], 136)
         x = F.relu(self.linear4(x))
         print(x.size())
-        x = x.view(2, 68)
         # x = F.relu(self.linear1(x))
         # x = self.drop2(x)
         # x = F.relu(self.linear2(x))
